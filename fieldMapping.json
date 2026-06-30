@@ -1,0 +1,39 @@
+{
+  "Version": "v1",
+  "MappingFields": [
+    {
+      "Name": "employeeNumber",
+      "Description": "",
+      "Type": "Text",
+      "MappingActions": [
+        {
+          "MapForActions": [
+            "Create"
+          ],
+          "MappingMode": "Field",
+          "Value": "\"Person.ExternalId\"",
+          "UsedInNotifications": false,
+          "StoreInAccountData": false
+        }
+      ]
+    },
+    {
+      "Name": "userName",
+      "Description": "",
+      "Type": "Text",
+      "MappingActions": [
+        {
+          "MapForActions": [
+            "Create",
+            "Update"
+          ],
+          "MappingMode": "Complex",
+          "Value": "\"function getUserLogonName() {\\r\\n    let userLogonName = '';\\r\\n    if (typeof Person.Accounts.MicrosoftActiveDirectory.UserPrincipalName !== 'undefined' && Person.Accounts.MicrosoftActiveDirectory.UserPrincipalName) {\\r\\n        userLogonName = Person.Accounts.MicrosoftActiveDirectory.UserPrincipalName;\\r\\n    }\\r\\n    return userLogonName;\\r\\n}\\r\\ngetUserLogonName()\"",
+          "UsedInNotifications": false,
+          "StoreInAccountData": false
+        }
+      ]
+    }
+  ],
+  "UniqueFieldNames": []
+}

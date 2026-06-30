@@ -1,0 +1,43 @@
+[
+    {
+        "key": "BaseUrl",
+        "type": "input",
+        "defaultValue": "",
+        "templateOptions": {
+            "label": "BaseUrl",
+            "description": "The URL to the OrtecWS SOAP API.",
+            "required": true
+        }
+    },
+    {
+        "key": "Psk",
+        "type": "input",
+        "defaultValue": "",
+        "templateOptions": {
+            "label": "Psk",
+            "description": "The PSK to connect to the OrtecWS SOAP API.",
+            "required": true
+        }
+    },
+    {
+        "key": "ApiUsername",
+        "type": "input",
+        "defaultValue": "",
+        "templateOptions": {
+            "label": "API Username",
+            "description": "The username used for authenticating with the OrtecWS SOAP API.",
+            "required": true
+        }
+    },
+    {
+        "key": "ApiPassword",
+        "type": "input",
+        "defaultValue": "",
+        "templateOptions": {
+            "type": "password",
+            "label": "API Password",
+            "description": "The password associated with the OrtecWS SOAP API username.",
+            "required": true
+        }
+    }
+]
