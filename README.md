@@ -126,15 +126,11 @@ The Ortec-WS API can also be noticeably slow when creating or updating user data
 
 When updating the _userName_ field, we sometimes received error: _Exceptions_ with result: _NACK_. The cause of this error is currently unknown.
 
-> 30-6-26 This 'issue' has been submitted to the supplier.
-
 ### Enable and disable accounts
 
 When enabling and/or disabling the account, the _userName_ must always be inluded in the enable/update request. Be aware that;
 - An empty userName will result in error: '_Exceptions_ with result: _NACK_'.
 - A _userName_ that is incorrect returns _ACK_ indicating that the request was succesful. However, the account will not be enabled/disabled.
-
-> 30-6-26 This 'issue' has been submitted to the supplier.
 
 ### Importing accounts
 
