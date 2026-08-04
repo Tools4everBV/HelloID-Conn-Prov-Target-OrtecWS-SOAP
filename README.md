@@ -57,7 +57,7 @@ The following features are available:
 
 | Feature                                   | Supported | Actions                                 | Remarks |
 | ----------------------------------------- | --------- | --------------------------------------- | ------- |
-| **Account Lifecycle**                     | ✅         | Create, Update, Enable, Disable, Delete |         |
+| **Account Lifecycle**                     | ✅         | Create, Update, Enable, Disable |         |
 | **Permissions**                           | ✅         | Retrieve, Grant, Revoke                 |         |
 | **Resources**                             | ❌         | -                                       |         |
 | **Entitlement Import: Accounts**          | ✅         | -                                       |         |
