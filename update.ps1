@@ -83,7 +83,7 @@ $Body
 "@
 
     $params = @{
-        Uri         = "$($actionContext.Configuration.BaseUrl)/CAIS/ApplicationIntegration/Development1?wsdl"
+        Uri         = "$($actionContext.Configuration.BaseUrl)"
         Method      = 'POST'
         Body        = $envelope
         Headers     = $headers
