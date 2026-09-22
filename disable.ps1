@@ -89,15 +89,35 @@ $Body
         Headers     = $headers
         ContentType = 'application/soap+xml; charset=utf-8'
     }
+    try {
+        $response = Invoke-restmethod @params
+        $responseXML = $response.Envelope.Body.SendMessageResponse.SendMessageResult
 
-    $response = Invoke-RestMethod @params
-    $responseXML = $response.Envelope.Body.SendMessageResponse.SendMessageResult
-    [xml]$xmlParsed = $responseXML
-    $returnObjectobj = Convert-XmlNodeToPsObject $xmlParsed.DocumentElement
-    if ($returnObjectobj.response.error) {
-        throw "The action could not be executed and failed with error: [$($returnObjectobj.response.error)], result: [$($returnObjectobj.response.result)] "
+        [xml]$xmlParsed = $responseXML
+        $returnObjectobj = Convert-XmlNodeToPsObject $xmlParsed.DocumentElement
+        Write-Output $returnObjectobj
     }
-    Write-Output $returnObjectobj
+    catch {
+        $ex = $PSItem
+
+        if ( $($ex.Exception.GetType().FullName -eq 'Microsoft.PowerShell.Commands.HttpResponseException') -or
+            $($ex.Exception.GetType().FullName -eq 'System.Net.WebException')) {
+            $errorObj = Resolve-OrtecWSError -ErrorObject $ex
+
+            $auditMessage = "$($ex.Exception.Message)"        
+            $warningMessage = "Error at Line [$($ex.InvocationInfo.ScriptLineNumber)]: $($ex.InvocationInfo.Line). Error: $($errorObj.ErrorDetails)"
+        }
+        else {
+            $auditMessage = "$($ex.Exception.Message)"
+            $warningMessage = "Error at Line [$($ex.InvocationInfo.ScriptLineNumber)]: $($ex.InvocationInfo.Line). Error: $($ex.Exception.Message)"
+        }
+
+        Write-Warning "$([System.Net.WebUtility]::HtmlDecode($warningMessage))"
+
+
+        throw $auditMessage
+    }
+
 }
 
 function Convert-XmlNodeToPsObject {
@@ -125,6 +145,44 @@ function Convert-XmlNodeToPsObject {
         }
     }
     [PSCustomObject]$props
+}
+
+function Resolve-OrtecWSError {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [object]
+        $ErrorObject
+    )
+    process {
+        $httpErrorObj = [PSCustomObject]@{
+            ScriptLineNumber = $ErrorObject.InvocationInfo.ScriptLineNumber
+            Line             = $ErrorObject.InvocationInfo.Line
+            ErrorDetails     = $ErrorObject.Exception.Message
+            FriendlyMessage  = $ErrorObject.Exception.Message
+        }
+        if (-not [string]::IsNullOrEmpty($ErrorObject.ErrorDetails.Message)) {
+            $httpErrorObj.ErrorDetails = $ErrorObject.ErrorDetails.Message
+        }
+        elseif ($ErrorObject.Exception.GetType().FullName -eq 'System.Net.WebException') {
+            if ($null -ne $ErrorObject.Exception.Response) {
+                $streamReaderResponse = [System.IO.StreamReader]::new($ErrorObject.Exception.Response.GetResponseStream()).ReadToEnd()
+                if (-not [string]::IsNullOrEmpty($streamReaderResponse)) {
+                    $httpErrorObj.ErrorDetails = $streamReaderResponse
+                }
+            }
+        }
+        try {
+            # Make sure to inspect the error result object and add only the error message as a FriendlyMessage.
+            # $errorDetailsObject = ($httpErrorObj.ErrorDetails | ConvertFrom-Json)
+            # $httpErrorObj.FriendlyMessage = $errorDetailsObject.message
+            $httpErrorObj.FriendlyMessage = $httpErrorObj.ErrorDetails # Temporarily assignment
+        }
+        catch {
+            $httpErrorObj.FriendlyMessage = "Error: [$($httpErrorObj.ErrorDetails)] [$($_.Exception.Message)]"
+        }
+        Write-Output $httpErrorObj
+    }
 }
 #endregion
 

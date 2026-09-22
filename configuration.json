@@ -12,10 +12,10 @@
   },
   {
     "defaultValue": "",
-    "key": "Psk",
+    "key": "PSK",
     "templateOptions": {
-      "description": "The PSK to connect to the OrtecWS SOAP API.",
-      "label": "Psk",
+      "description": "The PSK (Pre-Shared Key) used to connect to the OrtecWS SOAP API.",
+      "label": "PSK",
       "required": true,
       "type": "password"
     },
