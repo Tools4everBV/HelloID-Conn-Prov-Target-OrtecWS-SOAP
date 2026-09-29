@@ -245,7 +245,7 @@ try {
                 Write-Information 'Creating and correlating Ortec-WS account'
                 Write-Information 'Invoking Ortec-WS HelloID_AddUser command'
                 $helloID_AddUserResponse = Invoke-OrtecSoapRequest -CommandName 'HelloID_AddUser' -Body $splatHelloID_AddUserXmlBody
-                $result = $helloID_AddUserResponse.Response.result
+                $result = $helloID_AddUserResponse.repsonse.result
                 if ($result -eq 'ACK') {
 
                     # Retrieve the created account
