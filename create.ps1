@@ -214,6 +214,11 @@ try {
         Write-Information 'Invoking Ortec-WS HelloID_GetUser command'
         $helloID_GetUserResponse = Invoke-OrtecSoapRequest -CommandName 'HelloID_GetUser' -Body $splatHelloID_GetUserXmlBody
         $correlatedAccount = $helloID_GetUserResponse.users.user | Select-Object -Property userName, employeeNumber
+
+        if ($actionContext.DryRun -eq $true) {
+            Write-Warning "[DryRun] HelloID_GetUserResponse:  $($helloID_GetUserResponse.users.user | convertto-json)"
+        }
+
     }
     else {
         throw 'Correlation is not enabled for this connector, correlation is required must be enabled'
@@ -299,7 +304,7 @@ try {
 catch {
     $outputContext.success = $false
     $ex = $PSItem
-    $auditLogMessage = "Could not create or correlate Ortec-WS account: [$($actionContext.References.Account)]. Error: $($ex.Exception.Message)"
+    $auditLogMessage = "Could not create or correlate Ortec-WS account: [$($actionContext.data.userName)]. Error: $($ex.Exception.Message)"
     Write-Warning "Error at Line '$($ex.InvocationInfo.ScriptLineNumber)': $($ex.InvocationInfo.Line). Error: $($ex.Exception.Message)"
     $outputContext.AuditLogs.Add([PSCustomObject]@{
             Message = $auditLogMessage
