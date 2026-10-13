@@ -83,18 +83,41 @@ $Body
 "@
 
     $params = @{
-        Uri         = "$($actionContext.Configuration.BaseUrl)/CAIS/ApplicationIntegration/Development1?wsdl"
+        Uri         = "$($actionContext.Configuration.BaseUrl)"
         Method      = 'POST'
         Body        = $envelope
         Headers     = $headers
         ContentType = 'application/soap+xml; charset=utf-8'
     }
+    try {
+        $response = Invoke-restmethod @params
+        $responseXML = $response.Envelope.Body.SendMessageResponse.SendMessageResult
 
-    $response = Invoke-RestMethod @params
-    $responseXML = $response.Envelope.Body.SendMessageResponse.SendMessageResult
-    [xml]$xmlParsed = $responseXML
-    $returnObjectobj = Convert-XmlNodeToPsObject $xmlParsed.DocumentElement
-    Write-Output $returnObjectobj
+        [xml]$xmlParsed = $responseXML
+        $returnObjectobj = Convert-XmlNodeToPsObject $xmlParsed.DocumentElement
+        Write-Output $returnObjectobj
+    }
+    catch {
+        $ex = $PSItem
+
+        if ( $($ex.Exception.GetType().FullName -eq 'Microsoft.PowerShell.Commands.HttpResponseException') -or
+            $($ex.Exception.GetType().FullName -eq 'System.Net.WebException')) {
+            $errorObj = Resolve-OrtecWSError -ErrorObject $ex
+
+            $auditMessage = "$($ex.Exception.Message)"        
+            $warningMessage = "Error at Line [$($ex.InvocationInfo.ScriptLineNumber)]: $($ex.InvocationInfo.Line). Error: $($errorObj.ErrorDetails)"
+        }
+        else {
+            $auditMessage = "$($ex.Exception.Message)"
+            $warningMessage = "Error at Line [$($ex.InvocationInfo.ScriptLineNumber)]: $($ex.InvocationInfo.Line). Error: $($ex.Exception.Message)"
+        }
+
+        Write-Warning "$([System.Net.WebUtility]::HtmlDecode($warningMessage))"
+
+
+        throw $auditMessage
+    }
+
 }
 
 function Convert-XmlNodeToPsObject {
@@ -122,6 +145,44 @@ function Convert-XmlNodeToPsObject {
         }
     }
     [PSCustomObject]$props
+}
+
+function Resolve-OrtecWSError {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [object]
+        $ErrorObject
+    )
+    process {
+        $httpErrorObj = [PSCustomObject]@{
+            ScriptLineNumber = $ErrorObject.InvocationInfo.ScriptLineNumber
+            Line             = $ErrorObject.InvocationInfo.Line
+            ErrorDetails     = $ErrorObject.Exception.Message
+            FriendlyMessage  = $ErrorObject.Exception.Message
+        }
+        if (-not [string]::IsNullOrEmpty($ErrorObject.ErrorDetails.Message)) {
+            $httpErrorObj.ErrorDetails = $ErrorObject.ErrorDetails.Message
+        }
+        elseif ($ErrorObject.Exception.GetType().FullName -eq 'System.Net.WebException') {
+            if ($null -ne $ErrorObject.Exception.Response) {
+                $streamReaderResponse = [System.IO.StreamReader]::new($ErrorObject.Exception.Response.GetResponseStream()).ReadToEnd()
+                if (-not [string]::IsNullOrEmpty($streamReaderResponse)) {
+                    $httpErrorObj.ErrorDetails = $streamReaderResponse
+                }
+            }
+        }
+        try {
+            # Make sure to inspect the error result object and add only the error message as a FriendlyMessage.
+            # $errorDetailsObject = ($httpErrorObj.ErrorDetails | ConvertFrom-Json)
+            # $httpErrorObj.FriendlyMessage = $errorDetailsObject.message
+            $httpErrorObj.FriendlyMessage = $httpErrorObj.ErrorDetails # Temporarily assignment
+        }
+        catch {
+            $httpErrorObj.FriendlyMessage = "Error: [$($httpErrorObj.ErrorDetails)] [$($_.Exception.Message)]"
+        }
+        Write-Output $httpErrorObj
+    }
 }
 #endregion
 
@@ -153,7 +214,13 @@ try {
         Write-Information 'Invoking Ortec-WS HelloID_GetUser command'
         $helloID_GetUserResponse = Invoke-OrtecSoapRequest -CommandName 'HelloID_GetUser' -Body $splatHelloID_GetUserXmlBody
         $correlatedAccount = $helloID_GetUserResponse.users.user | Select-Object -Property userName, employeeNumber
-    } else {
+
+        if ($actionContext.DryRun -eq $true) {
+            Write-Warning "[DryRun] HelloID_GetUserResponse:  $($helloID_GetUserResponse.users.user | convertto-json)"
+        }
+
+    }
+    else {
         throw 'Correlation is not enabled for this connector, correlation is required must be enabled'
     }
 
@@ -183,7 +250,7 @@ try {
                 Write-Information 'Creating and correlating Ortec-WS account'
                 Write-Information 'Invoking Ortec-WS HelloID_AddUser command'
                 $helloID_AddUserResponse = Invoke-OrtecSoapRequest -CommandName 'HelloID_AddUser' -Body $splatHelloID_AddUserXmlBody
-                $result = $helloID_AddUserResponse.Response.result
+                $result = $helloID_AddUserResponse.repsonse.result
                 if ($result -eq 'ACK') {
 
                     # Retrieve the created account
@@ -200,7 +267,8 @@ try {
                     if ($null -eq $createdAccount) {
                         Write-Information 'Account was created but could not be retrieved. An employee account does not exist. Therefore, the account was created but could no be attached to an existing employee in Ortec-WS. Please verify if an employee account for this user exists in Ortec-WS'
                     }
-                } elseif ($result -eq 'NACK') {
+                }
+                elseif ($result -eq 'NACK') {
                     throw "Ortec-WS responded with NACK, the account was not created. Response: [$($helloID_AddUserResponse.repsonse.error)]"
                 }
                 else {
@@ -236,7 +304,7 @@ try {
 catch {
     $outputContext.success = $false
     $ex = $PSItem
-    $auditLogMessage = "Could not create or correlate Ortec-WS account: [$($actionContext.References.Account)]. Error: $($ex.Exception.Message)"
+    $auditLogMessage = "Could not create or correlate Ortec-WS account: [$($actionContext.data.userName)]. Error: $($ex.Exception.Message)"
     Write-Warning "Error at Line '$($ex.InvocationInfo.ScriptLineNumber)': $($ex.InvocationInfo.Line). Error: $($ex.Exception.Message)"
     $outputContext.AuditLogs.Add([PSCustomObject]@{
             Message = $auditLogMessage

@@ -28,7 +28,16 @@
             "Update"
           ],
           "MappingMode": "Complex",
-          "Value": "\"function getUserLogonName() {\\r\\n    let userLogonName = '';\\r\\n    if (typeof Person.Accounts.MicrosoftActiveDirectory.UserPrincipalName !== 'undefined' && Person.Accounts.MicrosoftActiveDirectory.UserPrincipalName) {\\r\\n        userLogonName = Person.Accounts.MicrosoftActiveDirectory.UserPrincipalName;\\r\\n    }\\r\\n    return userLogonName;\\r\\n}\\r\\ngetUserLogonName()\"",
+          "Value": "\"function getUserLogonName() {\\r\\n    let userLogonName = '';\\r\\n    if (typeof Person.Accounts.MicrosoftActiveDirectory.userPrincipalName !== 'undefined' && Person.Accounts.MicrosoftActiveDirectory.userPrincipalName) {\\r\\n        userLogonName = Person.Accounts.MicrosoftActiveDirectory.userPrincipalName;\\r\\n    }\\r\\n    return userLogonName;\\r\\n}\\r\\ngetUserLogonName();\"",
+          "UsedInNotifications": false,
+          "StoreInAccountData": false
+        },
+        {
+          "MapForActions": [
+            "Delete"
+          ],
+          "MappingMode": "Complex",
+          "Value": "\"function convertDate(date) {\\r\\n    // Get day, month, and year components\\r\\n    const day = date.getDate().toString().padStart(2, '0');\\r\\n    const month = (date.getMonth() + 1).toString().padStart(2, '0');\\r\\n    const year = date.getFullYear();\\r\\n\\r\\n    return year + month + day;\\r\\n}\\r\\n\\r\\nfunction getEmail() {\\r\\n    let domain = '@domein.nl';\\r\\n    let currentDate = convertDate(new Date());\\r\\n    let email = 'unknown' + currentDate + domain;\\r\\n\\r\\n    if (typeof Person.ExternalId !== 'undefined' && Person.ExternalId) {\\r\\n        email = Person.ExternalId;\\r\\n        email = email + domain;\\r\\n    }\\r\\n\\r\\n    return email;\\r\\n}\\r\\n\\r\\ngetEmail();\"",
           "UsedInNotifications": false,
           "StoreInAccountData": false
         }
