@@ -250,6 +250,10 @@ try {
         'NoChanges' {
             Write-Information "No changes to Ortec-WS account with accountReference: [$($actionContext.References.Account)]"
             $outputContext.Success = $true
+            $outputContext.AuditLogs.Add([PSCustomObject]@{
+                    Message = "Skipped updating Ortec-WS account with AccountReference: [$($actionContext.References.Account)]. Reason: No changes."
+                    IsError = $false
+                })
             break
         }
 
