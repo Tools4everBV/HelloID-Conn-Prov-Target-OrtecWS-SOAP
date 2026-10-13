@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
  - Added warning message with the error details from the response
+ - Addded update of username on account delete
 
 ### Changed
 
