@@ -141,8 +141,16 @@ function Convert-XmlNodeToPsObject {
             $props[$name] += Convert-XmlNodeToPsObject $child
         }
         else {
-            $props[$name] = $child.InnerText
+            if ($props.ContainsKey($name)) {
+                $props[$name] = @($props[$name]) + @($child.InnerText)
+            }
+            else {
+                $props[$name] = $child.InnerText
+            }
         }
+        # else {
+        #     $props[$name] = $child.InnerText
+        # }
     }
     [PSCustomObject]$props
 }
@@ -218,8 +226,8 @@ try {
         if ($user.Roles.GetType().name -eq "String") {
             continue
         }
-        foreach ($role in @($user.Roles)) {
-            $roleId = [string]$role.roleId
+        foreach ($role in @($user.Roles.roleId)) {
+            $roleId = [string]$role
 
             $entry = $roleToAccounts | Where-Object { $_.roleId -eq $roleId }
             if (-not $entry) {
